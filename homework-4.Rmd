@@ -41,11 +41,48 @@ plot after Figure 8.10. Describe the results obtained.
 ## Answer 1
 
 ```{r}
-set.seed(1)
+set.seed(1234)
 df <- tbl_df(Boston)
-inTraining <- createDataPartition(df$medv, p = .75, list = F)
-training <- df[inTraining, ]
-testing  <- df[-inTraining, ]
+
+for (k in 1:20){
+  inTraining <- createDataPartition(df$medv, p = .75, list = F)
+  training <- df[inTraining, ]
+  testing <- df[-inTraining, ]
+  mtry <- c(3:9)
+  ntree <- seq(25, 500, len = 20)
+  results <- tibble(trial = rep(NA, 140),
+  mtry = rep(NA, 140),
+  ntree = rep(NA, 140),
+  mse = rep(NA, 140)) 
+  for(i in 1:7){
+    cat(sprintf('Trial: %s, mtry: %s --- %s\n', k, mtry[i], Sys.time()))
+    for(j in 1:20){ 
+      rf_train <- randomForest(medv ~ .,
+                               data = training,
+                               mtry = mtry[i],
+                               ntree = ntree[j])
+      mse <- mean((predict(rf_train, newdata = testing) - testing$medv)^2)
+      results[(i-1)*20 + j, ] <- c(k, mtry[i], ntree[j], mse)
+    }
+  }
+  if(exists("results_total")){
+  results_total <- bind_rows(results_total, results)
+  }
+  else(
+  results_total <- results
+  )
+}
+```
+
+
+
+
+```{r}
+#set.seed(1)
+#df <- tbl_df(Boston)
+#inTraining <- createDataPartition(df$medv, p = .75, list = F)
+#training <- df[inTraining, ]
+#testing  <- df[-inTraining, ]
 
 # Since this problem was indicated as ungraded I wanted to submit the work 
 # I completed on it rather than copying your code from last night - I think 
@@ -53,33 +90,34 @@ testing  <- df[-inTraining, ]
 # the way there. If you have any feedback on the way I went about this I'd 
 # love to hear, though if not no big deal as well. 
 
-x <- data.frame(mtry = numeric(), RMSE = numeric(), tree = numeric())
+#x <- data.frame(mtry = numeric(), RMSE = numeric(), tree = numeric())
 
-for (a in training) {
-  i = 0      
-  rf_boston_cv <- train(medv ~ ., 
-                  data = training,
-                  method = "rf",
-                  ntree = 25 + (i * 25),
-                  importance = T,
-                  tuneGrid = data.frame(mtry = 3:9))
-  results <- rf_boston_cv$results[1:2]
-  results$tree <- 25 + (i * 25)
-  x <- rbind(x,results)
-  i <- i + 1
-  if(i == 19) {
-    break}
-}
-x
+#for (a in training) {
+#  i = 0      
+#  rf_boston_cv <- train(medv ~ ., 
+#                  data = training,
+#                  method = "rf",
+#                  ntree = 25 + (i * 25),
+#                  importance = T,
+#                  tuneGrid = data.frame(mtry = 3:9))
+#  results <- rf_boston_cv$results[1:2]
+#  results$tree <- 25 + (i * 25)
+#  x <- rbind(x,results)
+#  i <- i + 1
+#  if(i == 19) {
+#    break}
+#}
+#x
+
+#```
+
+#```{r}
+#p <- ggplot(data = x, aes(x = x$mtry, y = x$RMSE))
+#p + geom_line(col = "#6E0000") + 
+#  theme_bw()
+#```
 
 ```
-```{r}
-p <- ggplot(data = x, aes(x = x$mtry, y = x$RMSE))
-p + geom_line(col = "#6E0000") + 
-  theme_bw()
-```
-
-
 
 ## Problem 2
 
